@@ -124,7 +124,7 @@
     '圈注未完成／未定位':'Annotation incomplete / unmapped','未建立圈注':'No circle annotation created','不適用':'Not applicable','舊區圈注':'Earlier area annotations','目前區圈注':'Current area annotations',
     '所選原生圖紙沒有可見線條（來源標示）':'No visible linework in the selected native sheet (source status)',
     '圈號對應來源元素差異':'Circles reference source element differences','原生 PDF 文件（來源）':'Native PDF filename (source)',
-    'Revit 原生圖紙圖像':'Native Revit sheet image','下載圈註 PDF':'Download annotated PDF','下載舊版 PDF':'Download earlier PDF','下載目前 PDF':'Download current PDF','匯出目前圖紙 Word':'Export current sheet Word'
+    'Revit 原生圖紙圖像':'Native Revit sheet image','下載圈註 PDF':'Download annotated PDF','下載舊版 PDF':'Download earlier PDF','下載目前 PDF':'Download current PDF','匯出目前圖紙 Word':'Export current sheet Word','原生圖紙背景來源狀態（原始記錄）':'Native sheet background source status (raw records)'
   };
   const reverse = new Map(Object.entries(dictionary).map(([zh,en]) => [en,zh]));
   function t(key, values = {}, lang = language) {

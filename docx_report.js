@@ -217,6 +217,8 @@
     body+=paragraph(modelReview ? 'Model sources and reference snapshot dates' : l('圖紙來源及收到日期','Drawing sources and receipt dates'),'Heading1');
     const receivedOld=dateOnly(meta.received_old), receivedNew=dateOnly(meta.received_new);
     body+=table([l('資料','Field'),modelReview ? 'Earlier revision' : l('舊版','Old drawing'),modelReview ? 'Later revision' : l('新版','New drawing')],[[modelReview ? 'Source and revision' : l('圖紙編號及版本','Drawing and version'),old.label || absent,fresh.label || absent],[l('來源檔名','Source filename'),old.filename || absent,fresh.filename || absent],[l('頁碼','Page'),String(old.page),String(fresh.page)],[modelReview ? 'Reference snapshot date' : l('收到圖紙日期','Drawing receipt date'),receivedOld || absent,receivedNew || absent]],[2100,3769,3769]);
+    const backgroundNotes=nativeModelPlan&&Array.isArray(data.native_background_notes)?data.native_background_notes.filter(v=>typeof v==='string'&&v.length):[];
+    if(backgroundNotes.length){body+=paragraph('Native sheet background source notes (raw records)','Heading2');for(const note of backgroundNotes)body+=paragraph(note,'Small');}
     if ((receivedOld || receivedNew) && !modelReview) body+=paragraph(meta.received_dates_source === 'pdf_moddate' ? l('收到日期按 PDF 內部修改日期預填，請確認。','Receipt dates are prefilled from the internal PDF modification dates. Please confirm.') : l('收到日期按原檔修改日期預填，請確認。','Receipt dates are prefilled from the original file modification dates. Please confirm.'),'Small');
     body+=paragraph(l('簡單改變描述','Summary of Observed Differences'),'Heading1');
     const counts={};for(const i of issues)counts[i.category]=(counts[i.category]||0)+1;
