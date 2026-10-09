@@ -24,9 +24,14 @@
     NUMBER_CHANGED: ['標註編號改變', 'Annotation number changed'], ANNOTATION_MOVED: ['標註位置改變', 'Annotation position changed'],
     UNCLASSIFIED_GEOMETRY: ['未分類圖形改變', 'Unclassified geometry change'], ANNOTATION_ADDED: ['標註新增', 'Annotation added'],
     ANNOTATION_REMOVED: ['標註移除', 'Annotation removed'], TEXT_CHANGED: ['文字內容改變', 'Text content changed'], TEXT_REPLACEMENT: ['文字內容替換', 'Text content replaced'],
-    TEXT_ADDED: ['文字新增', 'Text added'], TEXT_REMOVED: ['文字移除', 'Text removed'], TEXT_MOVED: ['文字位置改變', 'Text position changed']
+    TEXT_ADDED: ['文字新增', 'Text added'], TEXT_REMOVED: ['文字移除', 'Text removed'], TEXT_MOVED: ['文字位置改變', 'Text position changed'],
+    MODEL_ADDED: ['模型元素新增', 'Model element added'], MODEL_REMOVED: ['模型元素移除', 'Model element removed'], MODEL_DELETED: ['模型元素移除', 'Model element removed'],
+    MODEL_MODIFIED: ['模型元素修改', 'Model element modified'], MODEL_CHANGED: ['模型元素改變', 'Model element changed'],
+    MODEL_MOVED: ['模型元素移位', 'Model element moved'], MODEL_TYPE_CHANGED: ['模型型號改變', 'Model type changed'],
+    MODEL_PARAMETER_CHANGED: ['模型參數改變', 'Model parameter changed'], MODEL_GEOMETRY_CHANGED: ['模型幾何改變', 'Model geometry changed'],
+    MODEL_SCOPEENTERED: ['模型進入比較範圍', 'Model element entered comparison scope'], MODEL_SCOPEEXITED: ['模型退出比較範圍', 'Model element left comparison scope']
   };
-  const categoryNames = { wall: ['牆體', 'Walls'], mark: ['Mark 標記', 'Marks'], dimension: ['尺寸及數值', 'Dimensions and values'], text: ['文字及說明', 'Text and notes'], geometry: ['待識別圖形', 'Unclassified geometry'], annotation_movement: ['標註移位', 'Annotation movement'], context: ['其他待確認', 'Other items for review'] };
+  const categoryNames = { wall: ['牆體', 'Walls'], door: ['門', 'Doors'], window: ['窗', 'Windows'], mark: ['Mark 標記', 'Marks'], dimension: ['尺寸及數值', 'Dimensions and values'], text: ['文字及說明', 'Text and notes'], geometry: ['待識別圖形', 'Unclassified geometry'], annotation_movement: ['標註移位', 'Annotation movement'], context: ['其他待確認', 'Other items for review'] };
   const priorityNames = {important: ['主要變更', 'Major candidate'], check: ['待確認', 'Requires review'], minor: ['小變動', 'Minor candidate']};
   const statusNames = {pending: ['待核對', 'Pending review'], confirmed: ['已核對 保留', 'Reviewed and retained'], ignored: ['已忽略', 'Ignored']};
   const confidenceNames = { high: ['高', 'High'], medium: ['中', 'Medium'], low: ['低', 'Low'], unpaired: ['未配對', 'Unpaired'] };
@@ -34,6 +39,14 @@
   function named(map, key, lang) { const v = map[key]; return v ? label(v[0], v[1], lang) : String(key || ''); }
   function length(runs) { return (runs || []).reduce((n, r) => n + Math.max(0, Number(r[1]) - Number(r[0])), 0); }
   function fallbackEnglish(issue, field) {
+    if (modelIssue(issue)) {
+      if (field === 'title' || field === 'what_changed') return named(typeNames, issue.kind, 'en') || 'Model element change';
+      if (field === 'certainty') return 'Element data comes from exported model snapshots. Engineering impact remains subject to review.';
+      if (field === 'location_hint') return 'See the captured model plan. Review the stated sheet mapping status.';
+      if (field === 'description') return 'Review the element identifiers and earlier/later source field values recorded below.';
+      if (field === 'why_it_matters' || field === 'next_action') return 'Review engineering and coordination implications, and verify the element location against the official drawing.';
+      return String(issue[field] || '');
+    }
     if (field === 'location_hint') {
       const parts = {圖面左上方:'Upper left of drawing',圖面左下方:'Lower left of drawing',圖面中上方:'Upper centre of drawing',圖面中下方:'Lower centre of drawing',圖面右上方:'Upper right of drawing',圖面右下方:'Lower right of drawing',圖面左部:'Left of drawing',圖面中部:'Centre of drawing',圖面右部:'Right of drawing'};
       return parts[issue.location_hint] || 'See highlighted drawing location';
@@ -161,14 +174,27 @@
     const labelText=s.drawing_number || data.source_labels?.[role] || s.drawing_numbers?.join(' / ') || s.original_filename || s.filename || '';
     return {label:labelText.replace(/\s*·\s*[a-f0-9]{8}$/i,''), filename:s.original_filename || s.filename || '', hash:s.sha256 || data.source_hashes?.[role] || '', page:s.page || data.source_pages?.[role] || 1};
   }
+  function modelIssue(issue, data) { return issue?.source_kind === 'revit_model' || data?.source_kind === 'revit_model'; }
+  function sourceValue(value) { return value === undefined || value === null ? 'Not provided' : typeof value === 'string' ? (value || '""') : typeof value === 'object' ? JSON.stringify(value) : String(value); }
+  function modelFields(evidence) {
+    const fields=evidence?.field_changes;
+    if (Array.isArray(fields)) return fields.filter(v=>v && typeof v === 'object' && !Array.isArray(v));
+    return fields && typeof fields === 'object' ? Object.entries(fields).map(([name,v])=>v && typeof v === 'object' ? {name,...v} : {name,new:v}) : [];
+  }
+  function sourceFieldValue(field, role) {
+    const value=Object.prototype.hasOwnProperty.call(field,role) ? field[role] : field[role+'_value'], unit=field[role+'_unit'] ?? field.unit;
+    return sourceValue(value)+(typeof unit === 'string' && unit && value !== undefined && value !== null ? ' '+unit : '');
+  }
   async function create(data, options = {}) {
     if (!data || typeof data !== 'object') throw new Error('Comparison data is required');
     const language = 'en';
     const l = (zh,en)=>label(zh,en,language), absent=l('未提供','Not provided');
-    const meta = options.metadata || {}, issues = options.issues || data.issues || [], reviews=options.reviews || {}, assets=options.assets || {};
-    if (!Array.isArray(issues)) throw new Error('Selected issues must be an array');
+    const meta = options.metadata || {}, suppliedIssues = options.issues || data.issues || [], reviews=options.reviews || {}, assets=options.assets || {};
+    if (!Array.isArray(suppliedIssues)) throw new Error('Selected issues must be an array');
+    const issues=suppliedIssues.map(i=>modelIssue(i,data) && i.source_kind !== 'revit_model' ? {...i,source_kind:'revit_model'} : i);
+    const modelReview=data.source_kind === 'revit_model' || issues.some(i=>modelIssue(i)), draftModelMapping=modelReview && data.model_mapping_status !== 'verified_sheet_pdf', nativeModelPlan=modelReview && data.page_background === 'native_revit_sheet';
     const review = i => {const r=reviews[i.id]; return typeof r === 'string' ? r : r?.status || i.review_status || 'pending';};
-    const title=String(meta.report_title || 'Query of Drawing Differences');
+    const title=String(meta.report_title || (modelReview ? 'Query of Model Differences' : 'Query of Drawing Differences'));
     const files={}, rels=[{id:'rIdStyles',type:'styles',target:'styles.xml'},{id:'rIdSettings',type:'settings',target:'settings.xml'},{id:'rIdFooter',type:'footer',target:'footer1.xml'}], old=source(data,'old'), fresh=source(data,'new');
     const contentTypes=new Set(); let imageCount=0;
     const image = path => {
@@ -182,34 +208,49 @@
       return '<w:p><w:pPr><w:jc w:val="center"/><w:keepNext/></w:pPr><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="'+cx+'" cy="'+cy+'"/><wp:docPr id="'+n+'" name="Comparison evidence '+n+'" descr="'+xml(path)+'"/><wp:cNvGraphicFramePr/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="'+n+'" name="'+xml(path)+'"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="'+rid+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>';
     };
     let body=paragraph(title,'Title');
-    body+=paragraph('This query records observed differences between the referenced drawing versions and requests confirmation of the intended revisions. Items marked Pending review remain subject to verification.');
+    body+=paragraph(nativeModelPlan ? 'Model field differences are the primary evidence. This report retains element identifiers and values from exported Revit snapshots. Native sheet circles provide drawing references; engineering significance remains subject to review.' : modelReview ? 'This report records element differences in exported Revit model snapshots and retains source identifiers and field values for review. Pending review means that engineering significance remains subject to review.' : 'This query records observed differences between the referenced drawing versions and requests confirmation of the intended revisions. Items marked Pending review remain subject to verification.');
+    if (nativeModelPlan && draftModelMapping) body+=paragraph('NATIVE REVIT SHEET EXPORTS — PDF/image consistency, temporary annotation output and PDF locations require runtime verification. Missing PDF coordinates do not mean an element is invisible. The viewer displays exported results and does not detect model changes.','Small');
+    else if (draftModelMapping) body+=paragraph('DRAFT MODEL PLAN — The plan is generated from captured 2D linework. Paper coordinates have not been verified against an official sheet PDF. Review element identifiers and source values; verify plan locations before issue.','Small');
     body+=paragraph(l('報告資料','Report information'),'Heading1');
     body+=table([l('資料','Field'),l('內容','Value')],[[l('項目','Project'),meta.project || absent],[l('客戶','Client'),meta.client || absent],[l('編製人','Prepared by'),meta.prepared_by || absent],[l('選取項目','Selected items'),String(issues.length)]],[2100,7538]);
-    body+=paragraph(l('圖紙來源及收到日期','Drawing sources and receipt dates'),'Heading1');
+    body+=paragraph(modelReview ? 'Model sources and reference snapshot dates' : l('圖紙來源及收到日期','Drawing sources and receipt dates'),'Heading1');
     const receivedOld=dateOnly(meta.received_old), receivedNew=dateOnly(meta.received_new);
-    body+=table([l('資料','Field'),l('舊版','Old drawing'),l('新版','New drawing')],[[l('圖紙編號及版本','Drawing and version'),old.label || absent,fresh.label || absent],[l('來源檔名','Source filename'),old.filename || absent,fresh.filename || absent],[l('頁碼','Page'),String(old.page),String(fresh.page)],[l('收到圖紙日期','Drawing receipt date'),receivedOld || absent,receivedNew || absent]],[2100,3769,3769]);
-    if (receivedOld || receivedNew) body+=paragraph(meta.received_dates_source === 'pdf_moddate' ? l('收到日期按 PDF 內部修改日期預填，請確認。','Receipt dates are prefilled from the internal PDF modification dates. Please confirm.') : l('收到日期按原檔修改日期預填，請確認。','Receipt dates are prefilled from the original file modification dates. Please confirm.'),'Small');
+    body+=table([l('資料','Field'),modelReview ? 'Earlier revision' : l('舊版','Old drawing'),modelReview ? 'Later revision' : l('新版','New drawing')],[[modelReview ? 'Source and revision' : l('圖紙編號及版本','Drawing and version'),old.label || absent,fresh.label || absent],[l('來源檔名','Source filename'),old.filename || absent,fresh.filename || absent],[l('頁碼','Page'),String(old.page),String(fresh.page)],[modelReview ? 'Reference snapshot date' : l('收到圖紙日期','Drawing receipt date'),receivedOld || absent,receivedNew || absent]],[2100,3769,3769]);
+    if ((receivedOld || receivedNew) && !modelReview) body+=paragraph(meta.received_dates_source === 'pdf_moddate' ? l('收到日期按 PDF 內部修改日期預填，請確認。','Receipt dates are prefilled from the internal PDF modification dates. Please confirm.') : l('收到日期按原檔修改日期預填，請確認。','Receipt dates are prefilled from the original file modification dates. Please confirm.'),'Small');
     body+=paragraph(l('簡單改變描述','Summary of Observed Differences'),'Heading1');
     const counts={};for(const i of issues)counts[i.category]=(counts[i.category]||0)+1;
-    const summaryCategories={wall:'wall or opening',mark:'mark',dimension:'dimension or numeric annotation',text:'text or note',geometry:'unclassified geometry',annotation_movement:'annotation movement',context:'other'};
-    const defaultSummary=issues.length ? 'The selected comparison items comprise '+Object.entries(counts).map(([category,count])=>count+' '+(summaryCategories[category]||'other')+' candidate'+(count===1?'':'s')).join(', ')+'. Please review the documented differences and confirm the intended revisions.' : 'No change items have been selected.';
+    const summaryCategories={wall:modelReview ? 'wall' : 'wall or opening',door:'door',window:'window',mark:'mark',dimension:'dimension or numeric annotation',text:'text or note',geometry:'unclassified geometry',annotation_movement:'annotation movement',context:'other'};
+    const defaultSummary=issues.length ? 'The selected comparison items comprise '+Object.entries(counts).map(([category,count])=>count+' '+(summaryCategories[category]||'other')+(modelReview ? ' difference' : ' candidate')+(count===1?'':'s')).join(', ')+'. Please review the documented differences and confirm the intended revisions.' : 'No change items have been selected.';
     body+=paragraph(meta.summary || defaultSummary);
     if (issues.length) body+=table([l('編號','No'),l('分類及變更','Category and change'),l('覆核狀態','Review status')],issues.map((i,n)=>[String(i.display_number || n+1),named(categoryNames,i.category,language)+'\n'+issueText(i,'title',language),named(statusNames,review(i),language)]),[650,6888,2100]);
     for (let n=0;n<issues.length;n++) {
       const i=issues[n]; body+='<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
       body+=paragraph(l('變更項目','Change item')+' '+(i.display_number || n+1),'Heading1');
       body+=paragraph(issueText(i,'title',language),'Heading2');
-      body+=table([l('分類','Category'),l('重要程度','Priority'),l('覆核狀態','Review status')],[[named(categoryNames,i.category,language),named(priorityNames,i.priority || 'check',language),named(statusNames,review(i),language)]],[3212,3213,3213]);
+      body+=table([l('分類','Category'),l('重要程度','Priority'),l('覆核狀態','Review status')],[[named(categoryNames,i.category,language),modelIssue(i) && i.priority === 'important' ? 'Major change' : modelIssue(i) && i.priority === 'minor' ? 'Minor change' : named(priorityNames,i.priority || 'check',language),named(statusNames,review(i),language)]],[3212,3213,3213]);
       body+=paragraph(l('位置','Location')+' '+issueText(i,'location_hint',language));
       body+=paragraph(l('簡單改變描述','Brief description of changes'),'Heading2');
       body+=paragraph(issueText(i,'description',language));
       if (i.why_it_matters) body+=paragraph(issueText(i,'why_it_matters',language));
+      if (modelIssue(i)) {
+        const evidence=i.model_evidence || {}, fields=modelFields(evidence);
+        body+=paragraph('Model element source','Heading2');
+        body+=table(['Source field','Value'],[['Element UniqueId',sourceValue(evidence.unique_id)],['Earlier ElementId',sourceValue(evidence.old_element_id)],['Later ElementId',sourceValue(evidence.new_element_id)],['Revit category',sourceValue(evidence.category_key)],['Model change kind',sourceValue(evidence.kind || i.kind)],['Plan mapping status',sourceValue(i.mapping_status || data.model_mapping_status)]],[2400,7238]);
+        if (fields.length) body+=table(['Field','Earlier value','Later value'],fields.map(field=>[String(field.field || field.name || field.key || ''),sourceFieldValue(field,'old'),sourceFieldValue(field,'new')]),[3212,3213,3213]);
+        else body+=paragraph('No field deltas are listed for this item. For additions or removals, review the source element identifiers and recorded change.','Small');
+        if (nativeModelPlan) {
+          const a=root.PCStrings?.nativeAnnotation ? root.PCStrings.nativeAnnotation(i) : {circle_number:i.circle_number ?? i.native_annotation?.circle_number ?? i.display_number,role:i.native_annotation_role ?? i.native_annotation?.role,old_status:i.old_annotation_status ?? i.native_annotation?.old_status,current_status:i.new_annotation_status ?? i.current_annotation_status ?? i.native_annotation?.new_status ?? i.native_annotation?.current_status};
+          const role=root.PCStrings?.nativeRole ? root.PCStrings.nativeRole(a.role,'en') : sourceValue(a.role), earlier=root.PCStrings?.nativeStatus ? root.PCStrings.nativeStatus(a.old_status,'en') : sourceValue(a.old_status), current=root.PCStrings?.nativeStatus ? root.PCStrings.nativeStatus(a.current_status,'en') : sourceValue(a.current_status);
+          body+=paragraph('Native annotation source and verification status','Heading2');
+          body+=table(['Source field','Value'],[['Circle number (source)',sourceValue(a.circle_number)],['Annotation area (source)',role],['Earlier area annotation status',earlier],['Current area annotation status',current],['Native PDF filename (source)',sourceValue(data.native_pdf_file)]],[3000,6638]);
+        }
+      }
       body+=paragraph('Confirmation Requested','Heading2');
-      const query=i.category==='wall'?'Please confirm whether the highlighted changes to the wall boundaries are intentional, and advise the applicable wall type and revised construction information. Please identify any associated coordination requirements.':i.category==='mark'?'Please confirm the revised annotation or mark and its corresponding element and schedule reference. Please clarify whether this is an annotation revision or a change to the physical element.':i.category==='dimension'?'Please confirm the revised numeric annotation, its applicable units and its reference to the relevant element or dimension. Please advise whether associated setting out or coordination information requires revision.':'Please review the highlighted difference and confirm whether the revised information is intentional. Please provide clarification and identify any associated coordination requirements.';
+      const query=modelIssue(i)?'Please review this element\'s source field differences and confirm their engineering and coordination implications. Verify its location against the official drawing before issue.':i.category==='wall'?'Please confirm whether the highlighted changes to the wall boundaries are intentional, and advise the applicable wall type and revised construction information. Please identify any associated coordination requirements.':i.category==='mark'?'Please confirm the revised annotation or mark and its corresponding element and schedule reference. Please clarify whether this is an annotation revision or a change to the physical element.':i.category==='dimension'?'Please confirm the revised numeric annotation, its applicable units and its reference to the relevant element or dimension. Please advise whether associated setting out or coordination information requires revision.':'Please review the highlighted difference and confirm whether the revised information is intentional. Please provide clarification and identify any associated coordination requirements.';
       body+=paragraph(query);
-      body+=paragraph(l('舊新版圖紙證據','Old and new drawing evidence'),'Heading2');
+      body+=paragraph(nativeModelPlan ? 'Native Revit sheet image evidence' : modelIssue(i) ? 'Earlier and later captured model plan evidence' : l('舊新版圖紙證據','Old and new drawing evidence'),'Heading2');
       body+=image(i.evidence_image);
-      body+=paragraph(l('OLD 為舊版 NEW 為新版','OLD denotes the old drawing and NEW denotes the new drawing.')+(i.category==='wall' ? '\n'+l('紅色為舊邊界 藍色為新邊界','Red denotes old boundaries and blue denotes new boundaries.') : ''),'Small');
+      body+=paragraph(nativeModelPlan ? 'The images are native Revit sheet exports. Compare baseline, current and annotated sheet outputs using the recorded circle numbers. PDF/image consistency and circle positions await runtime verification.' : modelIssue(i) ? 'OLD denotes the earlier capture; NEW denotes the later capture. Red shows the earlier model position and blue the later model position.' : l('OLD 為舊版 NEW 為新版','OLD denotes the old drawing and NEW denotes the new drawing.')+(i.category==='wall' ? '\n'+l('紅色為舊邊界 藍色為新邊界','Red denotes old boundaries and blue denotes new boundaries.') : ''),'Small');
       body+=paragraph(l('確認程度','Confidence')+' '+named(confidenceNames,i.confidence,language)+'\n'+issueText(i,'certainty',language),'Small');
       body+=paragraph(l('追溯編號','Trace reference')+' '+String(i.id || '')+'\n'+l('來源證據','Source evidence')+' '+(i.source_ids || [i.id]).join(', '),'Small');
     }

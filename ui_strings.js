@@ -87,7 +87,44 @@
     '{n} 項':'{n} candidates','{n} 已核對':'{n} reviewed','{n} 項列入清單':'{n} candidates listed','{n} 項主要變更':'{n} major changes',
     '{n} 項待確認':'{n} need review','{n} 項小變動':'{n} minor changes','配對邊界及端部／交接證據。':'Paired boundaries and end/junction evidence.',
     '紙面改動長度 {n} pt':'Changed length on paper: {n} pt','紙面偏移 {n} pt':'Offset on paper: {n} pt',
-    '附近標註：{text}':'Nearby annotation: {text}','此項合併 {n} 筆同區證據，原始編號：{ids}':'{n} local source records grouped here; source IDs: {ids}'
+    '附近標註：{text}':'Nearby annotation: {text}','此項合併 {n} 筆同區證據，原始編號：{ids}':'{n} local source records grouped here; source IDs: {ids}',
+    '模型平面變更':'Model plan changes','牆體變更':'Walls','門變更':'Doors','窗變更':'Windows',
+    '模型元素差異':'Model element differences','模型新增':'Model addition','模型移除':'Model removal','模型修改':'Model modification',
+    '模型位置改變':'Model position change','模型型號改變':'Model type change','模型參數改變':'Model parameter change','模型幾何改變':'Model geometry change',
+    '舊模型位置':'Earlier model position','新模型位置':'Later model position','模型平面草稿':'Draft model plan',
+    '舊模型平面':'Earlier model plan','新模型平面':'Later model plan','模型平面圖層':'Model plan layer',
+    '圖上編號對應模型差異；紅色及藍色表示舊、新捕捉位置。工程影響仍待覆核。':'Plan numbers identify model differences. Red and blue show earlier and later captured positions. Engineering impact remains subject to review.',
+    '模型平面草稿由捕捉的 2D 線條建立；紙面座標尚未對照正式 Sheet PDF 驗證。請以元素編號及來源值覆核，圖面位置待核對。':'Draft model plan from captured 2D linework. Paper coordinates have not been verified against an official sheet PDF. Review the element identifiers and source values; plan locations require verification.',
+    '模型元素資料':'Model element source','元素 UniqueId':'Element UniqueId','舊 ElementId':'Earlier ElementId','新 ElementId':'Later ElementId',
+    'Revit 類別':'Revit category','來源欄位變更':'Source field changes','欄位':'Field','舊值':'Earlier value','新值':'Later value','未提供':'Not provided',
+    '此項未附來源欄位差異；請核對元素來源記錄。':'No field deltas are listed for this item. For additions or removals, review the source element identifiers and recorded change.',
+    '模型變更種類':'Model change kind','模型進入比較範圍':'Model element entered comparison scope','模型退出比較範圍':'Model element left comparison scope','定位狀態':'Plan location status','所選平面沒有可見線條':'No visible linework in the selected plan',
+    '圖面定位待核對':'Plan location requires verification','Sheet PDF 定位已由來源聲明核對':'Sheet PDF mapping is declared verified by the source',
+    '元素資料來自模型快照；工程影響仍需覆核。':'Element data comes from model snapshots. Engineering impact remains subject to review.',
+    '模型差異來源及定位說明':'Model source and location notes','模型差異列出 {n} 項；保留匯出時的元素編號、類別及來源欄位。':'The export lists {n} model differences with element identifiers, categories and source fields.',
+    '比較範圍取決於匯出快照、類別、欄位及視圖；清單不保證涵蓋全部模型或工程問題。覆核狀態與模型欄位差異分開保存。':'Comparison coverage depends on the exported snapshots, categories, fields and views. The list does not guarantee coverage of every model or engineering issue. Review decisions are stored separately from model field differences.',
+    '捕捉的模型平面，非正式 Sheet PDF':'Captured model plan; sheet PDF mapping is unverified','模型欄位／位置變更':'Model field / position changes',
+    '工程影響及平面定位待覆核':'Engineering impact and plan locations require review','局部模型差異':'Local model differences',
+    '搜尋元素、欄位或編號':'Search element, field or ID','模型來源已列出；請覆核工程影響及圖面位置。':'Model sources are listed. Review engineering impact and plan locations.',
+    '{n} / {total} 項模型差異':'{n} / {total} model differences','全部 {n} 項模型差異':'All {n} model differences',
+    '顯示 {n} / {total} 項模型差異':'Showing {n} / {total} model differences','{n} 項模型差異':'{n} model differences',
+    '聚合圓圈顯示同區模型差異數，點選放大；全部逐項差異保留在左側清單。':'Cluster circles show the number of model differences in an area. Click to zoom; the complete difference list remains on the left.',
+    '此區 {n} 項模型差異，點選放大':'{n} model differences in this area; select to zoom','同區 {n} 項模型差異':'{n} model differences in the same area',
+    '模型差異 · 原生 Revit 圖紙':'Model differences · native Revit sheets','圈注的原生圖紙':'Annotated native sheet',
+    '舊版原生圖紙':'Earlier native sheet','目前原生圖紙':'Current native sheet','原生圖紙圖層':'Native sheet layer','查看原生圈注圖紙':'View the annotated native sheet',
+    '先查看模型差異及來源值。原生 Revit 圖紙輸出；PDF 及圖像的一致性、圈注輸出及定位仍待實機核對。':'Review model differences and source values first. These are native Revit sheet exports; PDF/image consistency, annotation output and locations require runtime verification.',
+    '圈號已列於清單；請在原生圖紙核對。未有 PDF 定位座標不代表構件不可見。':'Circle numbers are listed for checking on the native sheet. Missing PDF coordinates do not mean the element is invisible.',
+    '分享閱覽頁只載入已匯出的結果，不執行模型變更判定。':'The shared viewer displays exported results and does not detect model changes.',
+    '來源值先列出，再於原生 Revit 圖紙核對圈號。':'Source values are listed first; check the circle numbers on the native Revit sheet.',
+    '原生圈注來源及驗證狀態':'Native annotation source and verification status','圈號（來源）':'Circle number (source)',
+    '圈注範圍（來源）':'Annotation area (source)','舊區圈注狀態':'Earlier area annotation status','目前區圈注狀態':'Current area annotation status',
+    '舊區／舊位置':'Earlier area / position','目前區／目前位置':'Current area / position','舊區及目前區':'Earlier and current areas','未定位':'Unmapped',
+    '原生圈注及 PDF 定位待驗證':'Native annotations and PDF locations await verification','圈注待驗證':'Annotation awaits verification',
+    '已要求圈注，輸出待驗證':'Annotation requested; output awaits verification','Revit 註記已建立，PDF 輸出待驗證':'Revit annotation created; PDF output awaits verification',
+    '圈注未完成／未定位':'Annotation incomplete / unmapped','未建立圈注':'No circle annotation created','不適用':'Not applicable','舊區圈注':'Earlier area annotations','目前區圈注':'Current area annotations',
+    '所選原生圖紙沒有可見線條（來源標示）':'No visible linework in the selected native sheet (source status)',
+    '圈號對應來源元素差異':'Circles reference source element differences','原生 PDF 文件（來源）':'Native PDF filename (source)',
+    'Revit 原生圖紙圖像':'Native Revit sheet image','下載圈註 PDF':'Download annotated PDF'
   };
   const reverse = new Map(Object.entries(dictionary).map(([zh,en]) => [en,zh]));
   function t(key, values = {}, lang = language) {
@@ -161,6 +198,14 @@
   function issueText(issue, field, lang = language) {
     const original=issue[field] || (field==='what_changed'?issue.title:'') || '';
     if(lang!=='en')return original;
+    const explicit=issue[field+'_en'] || (field==='what_changed'?issue.title_en:'');
+    if(typeof explicit==='string'&&explicit)return explicit;
+    if(isModelIssue(issue)) {
+      if(original)return t(original,{},'en');
+      if(field==='title'||field==='what_changed')return modelKindName(issue.kind);
+      if(field==='certainty')return t('元素資料來自模型快照；工程影響仍需覆核。',{},'en');
+      return '';
+    }
     if(field==='title'||field==='what_changed') {
       if(issue.category==='wall') {
         if(issue.kind==='WALL_SHIFTED'&&issue.geometric_evidence?.width_delta_paper_pt>.5)return 'Wall position and thickness changed';
@@ -191,5 +236,37 @@
     if(field==='why_it_matters')return 'Verify whether the detected drawing change affects construction or coordination.';
     return original;
   }
-  global.PCStrings={t,getLanguage,setLanguage,translateDocument,issueText,wallDescription,dictionary,LANGUAGE_KEY};
+  function isModelIssue(issue, data) {return issue?.source_kind==='revit_model'||data?.source_kind==='revit_model';}
+  function modelKindName(kind) {
+    const names={MODEL_ADDED:'Model element added',MODEL_REMOVED:'Model element removed',MODEL_DELETED:'Model element removed',MODEL_MODIFIED:'Model element modified',MODEL_CHANGED:'Model element changed',MODEL_MOVED:'Model element moved',MODEL_TYPE_CHANGED:'Model type changed',MODEL_PARAMETER_CHANGED:'Model parameter changed',MODEL_GEOMETRY_CHANGED:'Model geometry changed',MODEL_SCOPEENTERED:'Model element entered comparison scope',MODEL_SCOPEEXITED:'Model element left comparison scope'};
+    return names[kind]||String(kind||'Model element change').replace(/^MODEL_/,'Model ').replaceAll('_',' ').toLowerCase();
+  }
+  function modelValue(value) {return value===undefined||value===null?t('未提供'):typeof value==='string'?(value||'""'):typeof value==='object'?JSON.stringify(value):String(value);}
+  function modelFieldChanges(evidence) {
+    const fields=evidence?.field_changes;
+    if(Array.isArray(fields))return fields.filter(v=>v&&typeof v==='object'&&!Array.isArray(v));
+    if(fields&&typeof fields==='object')return Object.entries(fields).map(([name,v])=>v&&typeof v==='object'?{name,...v}:{name,new:v});
+    return [];
+  }
+  function modelFieldValue(field, role) {
+    const value=Object.prototype.hasOwnProperty.call(field,role)?field[role]:field[role+'_value'];
+    const unit=field[role+'_unit']??field.unit;
+    return modelValue(value)+(typeof unit==='string'&&unit&&value!==null&&value!==undefined?' '+unit:'');
+  }
+  function nativeAnnotation(issue) {
+    const detail=issue?.native_annotation&&typeof issue.native_annotation==='object'?issue.native_annotation:{};
+    return {circle_number:issue?.circle_number??detail.circle_number??issue?.display_number,
+      role:issue?.native_annotation_role??detail.role,
+      old_status:issue?.old_annotation_status??detail.old_status,
+      current_status:issue?.new_annotation_status??issue?.current_annotation_status??detail.new_status??detail.current_status};
+  }
+  function nativeRole(role, lang=language) {
+    const labels={old:'舊區／舊位置',current:'目前區／目前位置',new:'目前區／目前位置',both:'舊區及目前區',unmapped:'未定位'};
+    return role===undefined||role===null||role===''?t('未提供',{},lang):t(labels[role]||String(role),{},lang);
+  }
+  function nativeStatus(status, lang=language) {
+    const labels={pending:'圈注待驗證',unverified:'圈注待驗證',requested:'已要求圈注，輸出待驗證',created:'Revit 註記已建立，PDF 輸出待驗證',circle_created:'Revit 註記已建立，PDF 輸出待驗證',placed:'Revit 註記已建立，PDF 輸出待驗證',annotated:'Revit 註記已建立，PDF 輸出待驗證',failed:'圈注未完成／未定位',unmapped:'圈注未完成／未定位',no_circle:'未建立圈注',not_applicable:'不適用',none:'不適用'};
+    return status===undefined||status===null||status===''?t('未提供',{},lang):t(labels[status]||String(status),{},lang);
+  }
+  global.PCStrings={t,getLanguage,setLanguage,translateDocument,issueText,wallDescription,dictionary,LANGUAGE_KEY,isModelIssue,modelKindName,modelValue,modelFieldChanges,modelFieldValue,nativeAnnotation,nativeRole,nativeStatus};
 })(window);

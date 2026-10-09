@@ -18,11 +18,25 @@
     }
     const keys=new Set(assetSpecs.map(x=>x.relative));for(const i of issues){if(i.evidence_image&&!keys.has(i.evidence_image))throw Error('Missing issue evidence image: '+i.evidence_image);}
     if(!keys.has('new_preview.png')&&!keys.has('aligned_preview.png')&&!keys.has('new_aligned.png'))throw Error('Missing drawing preview.');
+    const documentSpecs=[];
+    if(manifest.documents!==undefined){
+      if(!plain(manifest.documents)||Object.keys(manifest.documents).length>3)throw Error('Invalid native PDF document manifest.');
+      const names=new Set();
+      for(const[relative,name]of Object.entries(manifest.documents)){
+        root.PlanCompareZip.validatePath(relative);root.PlanCompareZip.validatePath(name);
+        if(!['old.pdf','new.pdf','annotated.pdf'].includes(relative)||!name.startsWith('documents/')||!/\.pdf$/i.test(name)||names.has(name))throw Error('Native PDF documents must use unique bundled PDF paths.');
+        names.add(name);const value=entries.get(name);
+        if(!value)throw Error('Missing native PDF document: '+relative);
+        if(value.length>120*1024*1024)throw Error('Native PDF document exceeds 120 MiB: '+relative);
+        if(value.length<5||![37,80,68,70,45].every((n,i)=>value[i]===n))throw Error('Invalid native PDF header: '+relative);
+        documentSpecs.push({relative,data:value,type:'application/pdf'});
+      }
+    }
     const reviews={};if(manifest.reviews!==undefined&&!plain(manifest.reviews))throw Error('Invalid review statuses.');for(const[id,status]of Object.entries(manifest.reviews||{})){if(ids.has(id)){if(!['pending','confirmed','ignored'].includes(status))throw Error('Invalid review status.');reviews[id]=status;}}
-    const metadata=plain(manifest.metadata)?manifest.metadata:{};return{manifest,data,assetSpecs,reviews,metadata};
+    const metadata=plain(manifest.metadata)?manifest.metadata:{};return{manifest,data,assetSpecs,documentSpecs,reviews,metadata};
   }
   function load(bytes){return validate(root.PlanCompareZip.read(bytes,{maxTotalBytes:350*1024*1024,maxEntries:6000}));}
-  function materialize(review){const urls=[],assets={};for(const item of review.assetSpecs){const url=URL.createObjectURL(new Blob([item.data],{type:item.type}));urls.push(url);assets[item.relative]=url;}return{data:{...review.data,viewer_only:true,assets,reviews:review.reviews,review_statuses:review.reviews,metadata:review.metadata,report_metadata:{...review.data.report_metadata,...review.metadata}},dispose:()=>urls.forEach(u=>URL.revokeObjectURL(u))};}
+  function materialize(review){const urls=[],assets={},documents={};for(const[item,target]of [...review.assetSpecs.map(x=>[x,assets]),...(review.documentSpecs||[]).map(x=>[x,documents])]){const url=URL.createObjectURL(new Blob([item.data],{type:item.type}));urls.push(url);target[item.relative]=url;}return{data:{...review.data,viewer_only:true,assets,documents,reviews:review.reviews,review_statuses:review.reviews,metadata:review.metadata,report_metadata:{...review.data.report_metadata,...review.metadata}},dispose:()=>urls.forEach(u=>URL.revokeObjectURL(u))};}
   function safeJSON(value){return JSON.stringify(value).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');}
   function injectData(template,data){if(typeof template!=='string'||template.split('__DATA__').length!==2)throw Error('Invalid fixed review template.');return template.replace('__DATA__',()=>safeJSON(data));}
   const api=Object.freeze({validate,load,materialize,safeJSON,injectData});root.PlanCompareBundle=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
