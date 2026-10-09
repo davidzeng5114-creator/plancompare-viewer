@@ -147,7 +147,7 @@ function renderSourcePresentation(){
     }
     if(draftModelMapping)warnings.push(t(nativeModelPlan?'先查看模型差異及來源值。原生 Revit 圖紙輸出；PDF 及圖像的一致性、圈注輸出及定位仍待實機核對。':'模型平面草稿由捕捉的 2D 線條建立；紙面座標尚未對照正式 Sheet PDF 驗證。請以元素編號及來源值覆核，圖面位置待核對。'));
   }
-  if(DATA.alignment_needs_review)warnings.push(t('對齊信心不足，請先核對對齊；所有候選仍完整列出，分類為暫定。'));
+  if(DATA.alignment_needs_review&&!nativeModelPlan)warnings.push(t('對齊信心不足，請先核對對齊；所有候選仍完整列出，分類為暫定。'));
   $('warning').textContent=warnings.join(' ');$('warning').style.display=warnings.length?'block':'none';
 }
 function applyLanguage(){S.translateDocument();renderSourcePresentation();document.title='PlanCompare · '+t(modelReview?'模型平面變更':'變更清單');for(const o of $('wallType').options){if(o.value==='all')continue;const label=wallTypes.find(v=>v[0]===o.value)?.[1]||o.value;o.textContent=t(label)+' '+issues.filter(c=>category(c)==='wall'&&hasWallType(c,o.value)).length}renderCoverage();render();if(selected)showDetail(selected)}
