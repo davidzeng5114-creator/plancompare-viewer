@@ -40,7 +40,7 @@ function visible(){return issues.filter(c=>matches(c))}
 function svg(tag,attrs){const n=document.createElementNS(NS,tag);for(const[k,v]of Object.entries(attrs))n.setAttribute(k,v);return n}
 function points(value){if(!Array.isArray(value)||!value.length)return null;const p=Array.isArray(value[0])?value:value.length%2===0&&typeof value[0]==='number'?Array.from({length:value.length/2},(_,i)=>value.slice(2*i,2*i+2)):value.map(v=>[v.x,v.y]);return p.length>=3&&p.every(v=>v.length>=2&&Number.isFinite(v[0])&&Number.isFinite(v[1]))?p.map(v=>v[0]+','+v[1]).join(' '):null}
 function zoomCluster(members){const[W,H]=DATA.page_size_pt,centers=members.map(c=>[(c.bbox_pt[0]+c.bbox_pt[2])/2,(c.bbox_pt[1]+c.bbox_pt[3])/2]),xs=centers.map(p=>p[0]),ys=centers.map(p=>p[1]),x1=Math.min(...xs),x2=Math.max(...xs),y1=Math.min(...ys),y2=Math.max(...ys);const target=Math.max(3.1,Math.min(22,Math.min($('viewport').clientWidth/((x2-x1+130)*baseW/W),$('viewport').clientHeight/((y2-y1+130)*baseH/H))));applyZoom(target,(x1+x2)/(2*W),(y1+y2)/(2*H))}
-function draw(){const root=$('circles'),[W,H]=DATA.page_size_pt,unit=W/Math.max(1,$('sheet').clientWidth),v=$('viewport'),sheet=$('sheet'),padding=unit*40,view=[(v.scrollLeft-sheet.offsetLeft)*unit-padding,(v.scrollTop-sheet.offsetTop)*unit-padding,(v.scrollLeft+v.clientWidth-sheet.offsetLeft)*unit+padding,(v.scrollTop+v.clientHeight-sheet.offsetTop)*unit+padding];root.replaceChildren();root.setAttribute('viewBox','0 0 '+W+' '+H);const placed=[],all=visible().filter(validBox),items=all.filter(c=>c.id===selected?.id||c.bbox_pt[0]<=view[2]&&c.bbox_pt[2]>=view[0]&&c.bbox_pt[1]<=view[3]&&c.bbox_pt[3]>=view[1]).sort((a,b)=>Number(a.id===selected?.id)-Number(b.id===selected?.id));const clustered=zoom<3&&all.length>80;$('mapHint').textContent=t(nativeModelPlan?'圈號已列於清單；請在原生圖紙核對。未有 PDF 定位座標不代表構件不可見。':modelReview?(clustered?'聚合圓圈顯示同區模型差異數，點選放大；全部逐項差異保留在左側清單。':'圖上編號對應模型差異；紅色及藍色表示舊、新捕捉位置。工程影響仍待覆核。'):clustered?'聚合圓圈內是同區候選數，點選放大；全部逐項問題保留在左側清單。':'圖上編號與清單一致；彩色邊界為辨識候選，未判明用途仍須核實。');
+function draw(){const root=$('circles'),[W,H]=DATA.page_size_pt,unit=W/Math.max(1,$('sheet').clientWidth),v=$('viewport'),sheet=$('sheet'),padding=unit*40,view=[(v.scrollLeft-sheet.offsetLeft)*unit-padding,(v.scrollTop-sheet.offsetTop)*unit-padding,(v.scrollLeft+v.clientWidth-sheet.offsetLeft)*unit+padding,(v.scrollTop+v.clientHeight-sheet.offsetTop)*unit+padding];root.replaceChildren();root.setAttribute('viewBox','0 0 '+W+' '+H);const placed=[],all=visible().filter(validBox),items=all.filter(c=>c.id===selected?.id||c.bbox_pt[0]<=view[2]&&c.bbox_pt[2]>=view[0]&&c.bbox_pt[1]<=view[3]&&c.bbox_pt[3]>=view[1]).sort((a,b)=>Number(a.id===selected?.id)-Number(b.id===selected?.id));const clustered=zoom<3&&all.length>80;$('mapHint').textContent=t(nativeModelPlan?nativeMapHint():modelReview?(clustered?'聚合圓圈顯示同區模型差異數，點選放大；全部逐項差異保留在左側清單。':'圖上編號對應模型差異；紅色及藍色表示舊、新捕捉位置。工程影響仍待覆核。'):clustered?'聚合圓圈內是同區候選數，點選放大；全部逐項問題保留在左側清單。':'圖上編號與清單一致；彩色邊界為辨識候選，未判明用途仍須核實。');
 function drawIssue(c){const b=c.bbox_pt,chosen=c.id===selected?.id,g=svg('g',{'data-id':c.id,role:'button',tabindex:0,'aria-label':numbers.get(c.id)+' · '+issueText(c,'title')});const color=state(c)==='ignored'?'#8c9baa':c.priority==='important'?'#c26072':c.priority==='minor'?'#8298ad':'#b78c50';
 if(c.polygons&&(isModelIssue(c)||category(c)==='wall'||chosen)){for(const p of c.polygons){const shapePoints=points(p.points_pt),attrs={fill:p.role==='old'?'#d57886':'#719fce','fill-opacity':chosen?.34:.14,stroke:p.role==='old'?'#bd596b':'#4a85bc','stroke-width':unit*(chosen?2:1),'pointer-events':'none'};if(shapePoints)g.append(svg('polygon',{...attrs,points:shapePoints}));else if(Array.isArray(p.bbox_pt)&&p.bbox_pt.every(Number.isFinite)){const r=p.bbox_pt;g.append(svg('rect',{...attrs,x:r[0],y:r[1],width:Math.max(.3,r[2]-r[0]),height:Math.max(.3,r[3]-r[1])}))}}}
 const cx=(b[0]+b[2])/2,cy=(b[1]+b[3])/2;if(chosen)g.append(svg('ellipse',{cx,cy,rx:Math.max((b[2]-b[0])/2+unit*7,unit*20),ry:Math.max((b[3]-b[1])/2+unit*7,unit*20),fill:'transparent',stroke:'#427cab','stroke-width':unit*2}));let mx=cx,my=cy;const radius=chosen?13:clustered?4:10;if(!clustered||chosen){for(let k=0;k<32&&placed.some(p=>Math.hypot(p[0]-mx,p[1]-my)<unit*(radius+p[2]+2));k++){const step=unit*(13+Math.floor(k/8)*12),angle=k*Math.PI/4;mx=Math.max(unit*(radius+1),Math.min(W-unit*(radius+1),cx+step*Math.cos(angle)));my=Math.max(unit*(radius+1),Math.min(H-unit*(radius+1),cy+step*Math.sin(angle)))}}placed.push([mx,my,radius]);if(mx!==cx||my!==cy)g.append(svg('line',{x1:cx,y1:cy,x2:mx,y2:my,stroke:color,'stroke-width':unit*.75,'pointer-events':'none'}));g.append(svg('circle',{cx:mx,cy:my,r:unit*radius,fill:chosen?'#477aa9':color,stroke:'#fff','stroke-width':unit*(chosen?1.7:.8)}));if(chosen||!clustered){const text=svg('text',{x:mx,y:my+unit*3,'text-anchor':'middle',fill:'#fff','font-size':unit*(chosen?11:8),'font-family':'sans-serif','font-weight':600,'pointer-events':'none'});text.textContent=numbers.get(c.id);g.append(text)}const title=svg('title',{});title.textContent=numbers.get(c.id)+' · '+issueText(c,'title')+' · '+gradeLabel(c.priority);g.append(title);g.addEventListener('click',()=>choose(c));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();choose(c)}});root.append(g)}
@@ -49,7 +49,10 @@ function applyZoom(next,px=.5,py=.5){const v=$('viewport');zoom=Math.max(1,Math.
 function fit(){const v=$('viewport'),[W,H]=DATA.page_size_pt;baseW=Math.max(1,Math.min(v.clientWidth-32,(v.clientHeight-32)*W/H));baseH=baseW*H/W;applyZoom(1)}
 function changeImage(){const hi=zoom>1.7,names={new:hi?'new_aligned.png':'aligned_preview.png',old:hi?'old.png':'old_preview.png',overlay:hi?'overlay.png':'overlay_preview.png'};const name=names[layer],src=DATA.assets?.[name]||name;if($('plan').getAttribute('src')!==src)$('plan').src=src}
 function choose(c){selected=c;if(validBox(c)){const b=c.bbox_pt,[W,H]=DATA.page_size_pt,target=Math.max(3,Math.min(22,Math.min($('viewport').clientWidth/(Math.max(90,b[2]-b[0]+80)*baseW/W),$('viewport').clientHeight/(Math.max(90,b[3]-b[1]+80)*baseH/H))));applyZoom(target,(b[0]+b[2])/(2*W),(b[1]+b[3])/(2*H))}else draw();showDetail(c);renderList()}
-function modelLocation(c){const status=c.mapping_status||c.model_mapping_status||DATA.model_mapping_status;if(nativeModelPlan&&status!=='verified_sheet_pdf')return t(status==='not_visible'?'所選原生圖紙沒有可見線條（來源標示）':'原生圈注及 PDF 定位待驗證');return status==='not_visible'?t('所選平面沒有可見線條'):status==='draft_unverified'||!status?t('圖面定位待核對'):status==='verified_sheet_pdf'?t('Sheet PDF 定位已由來源聲明核對'):String(status)}
+function modelLocation(c){const status=c.mapping_status||c.model_mapping_status||DATA.model_mapping_status;if(nativeModelPlan&&status!=='verified_sheet_pdf')return t(status==='not_visible'?'所選原生圖紙沒有可見線條（來源標示）':nativeHatchStyle?'原生標註及 PDF 定位待驗證':'原生圈注及 PDF 定位待驗證');return status==='not_visible'?t('所選平面沒有可見線條'):status==='draft_unverified'||!status?t('圖面定位待核對'):status==='verified_sheet_pdf'?t('Sheet PDF 定位已由來源聲明核對'):String(status)}
+const nativeHatchStyle=nativeModelPlan&&DATA.native_annotation_style==='wall_hatch_small_markers';
+const nativeVerificationNote=()=>nativeHatchStyle?'先查看模型差異及來源值。原生 Revit 圖紙輸出；請核對此項目的 PDF／圖像一致性、標註可見性及圖面位置。':'先查看模型差異及來源值。原生 Revit 圖紙輸出；請核對此項目的 PDF／圖像一致性、圈注可見性及圖面位置。';
+const nativeMapHint=()=>nativeHatchStyle?'放大查看牆身 hatch 與小編號，對照清單中的元素前後資料。':'圈號已列於清單；請在原生圖紙核對。未有 PDF 定位座標不代表構件不可見。';
 function showModelEvidence(container,c){
   const e=c.model_evidence||{},section=make('section');section.className='model-source';section.dataset.native='true';
   section.append(make('label','模型元素資料'));
@@ -64,8 +67,10 @@ function showModelEvidence(container,c){
     table.append(body);section.append(table);
   }else section.append(make('p','此項未附來源欄位差異；請核對元素來源記錄。'));
   if(nativeModelPlan){
-    const annotation=S.nativeAnnotation(c);section.append(make('label','原生圈注來源及驗證狀態'));
-    for(const[label,value]of [['圈號（來源）',annotation.circle_number??numbers.get(c.id)],['圈注範圍（來源）',S.nativeRole(annotation.role)],['舊區圈注狀態',S.nativeStatus(annotation.old_status)],['目前區圈注狀態',S.nativeStatus(annotation.current_status)],['原生 PDF 文件（來源）',DATA.native_pdf_file]]){
+    const annotation=S.nativeAnnotation(c);section.append(make('label',nativeHatchStyle?'原生標註來源及驗證狀態':'原生圈注來源及驗證狀態'));
+    const annotationRows=[[nativeHatchStyle?'標記編號（來源）':'圈號（來源）',annotation.circle_number??numbers.get(c.id)],[nativeHatchStyle?'標註範圍（來源）':'圈注範圍（來源）',S.nativeRole(annotation.role)],[nativeHatchStyle?'舊位置小標記狀態':'舊區圈注狀態',S.nativeStatus(annotation.old_status,lang(),nativeHatchStyle)],[nativeHatchStyle?'目前小標記狀態':'目前區圈注狀態',S.nativeStatus(annotation.current_status,lang(),nativeHatchStyle)],['原生 PDF 文件（來源）',DATA.native_pdf_file]];
+    if(nativeHatchStyle)annotationRows.splice(4,0,['目前構件色彩／填充（來源）',c.current_element_highlight_applied]);
+    for(const[label,value]of annotationRows){
       const row=make('p');row.append(make('strong',label));const valueNode=make('span');valueNode.className='source-value';valueNode.textContent=S.modelValue(value);row.append(valueNode);section.append(row);
     }
   }
@@ -83,9 +88,9 @@ function showDetail(c){
   d.append(make('label','覆核狀態'));const select=make('select');select.id='reviewStatus';select.setAttribute('aria-label',t('目前問題覆核狀態'));
   for(const[v,label]of [['pending','待核對'],['confirmed','已核對 · 保留'],['ignored','忽略此項']]){const option=make('option',label);option.value=v;select.append(option)}select.value=state(c);
   select.onchange=()=>{reviews[c.id]={status:select.value,signature:signature(c)};try{localStorage.setItem(key,JSON.stringify(reviews))}catch(e){}if(DATA.viewer_only)window.parent.postMessage({type:'plancompare:reviews',reviews:window.PlanCompareReviewStates()},'*');stats();draw();renderList()};d.append(select);
-  const actions=make('div');actions.className='detail-actions';for(const[layerName,label]of (nativeModelPlan?[['overlay','查看原生圈注圖紙']]:[['old',isModelIssue(c)?'舊模型平面':'查看舊版'],['new',isModelIssue(c)?'新模型平面':'查看新版']])){const btn=make('button',label);btn.onclick=()=>{layer=layerName;$('layer').value=layerName;changeImage()};actions.append(btn)}d.append(actions);
+  const actions=make('div');actions.className='detail-actions';for(const[layerName,label]of (nativeModelPlan?[['overlay',nativeHatchStyle?'查看原生標註圖紙':'查看原生圈注圖紙']]:[['old',isModelIssue(c)?'舊模型平面':'查看舊版'],['new',isModelIssue(c)?'新模型平面':'查看新版']])){const btn=make('button',label);btn.onclick=()=>{layer=layerName;$('layer').value=layerName;changeImage()};actions.append(btn)}d.append(actions);
   const details=make('details');details.append(make('summary',isModelIssue(c)?'模型差異來源及定位說明':'判斷依據及附近標註'));
-  if(isModelIssue(c)){if(c.next_action||c.next_action_en)details.append(make('p',issueText(c,'next_action')));if(draftModelMapping)details.append(make('p',nativeModelPlan?'先查看模型差異及來源值。原生 Revit 圖紙輸出；請核對此項目的 PDF／圖像一致性、圈注可見性及圖面位置。':'模型平面草稿由捕捉的 2D 線條建立；紙面座標尚未對照正式 Sheet PDF 驗證。請以元素編號及來源值覆核，圖面位置待核對。'))}
+  if(isModelIssue(c)){if(c.next_action||c.next_action_en)details.append(make('p',issueText(c,'next_action')));if(draftModelMapping)details.append(make('p',nativeModelPlan?nativeVerificationNote():'模型平面草稿由捕捉的 2D 線條建立；紙面座標尚未對照正式 Sheet PDF 驗證。請以元素編號及來源值覆核，圖面位置待核對。'))}
   else if(c.geometric_evidence){const e=c.geometric_evidence,measures=[];if(Number.isFinite(e.length_paper_pt))measures.push(t('紙面改動長度 {n} pt',{n:e.length_paper_pt}));if(Number.isFinite(e.offset_paper_pt))measures.push(t('紙面偏移 {n} pt',{n:e.offset_paper_pt}));details.append(make('p',t('配對邊界及端部／交接證據。')+' '+measures.join('; ')+'. '+t('紙面數值不是實際施工尺寸，主要／小變動是幾何門檻分類。')))}
   else if(c.next_action)details.append(make('p',issueText(c,'next_action')));
   if(c.ai_observation)details.append(make('p',(lang()==='en'?'Ollama observation: ':'Ollama 輔助觀察：')+issueText(c,'ai_observation')),make('p',issueText(c,'ai_uncertainty')||''));
@@ -112,10 +117,10 @@ let scrollFrame=0;viewport.addEventListener('scroll',()=>{if(!scrollFrame)scroll
 $('sources').textContent=DATA.source_labels?DATA.source_labels.old+' → '+DATA.source_labels.new:'';function renderCoverage(){const coverage=DATA.coverage||{},notes=[],fmt=n=>Number(n).toLocaleString(lang()==='en'?'en-GB':'zh-HK'),textTotal=coverage.native_text_changes_total??coverage.text_source_total,textAccounted=coverage.native_text_changes_accounted??coverage.text_source_accounted,rasterTotal=coverage.raw_region_count??coverage.raster_region_total??coverage.raster_regions_total,headings=[];
 if(modelReview){
   notes.push(t('模型差異列出 {n} 項；保留匯出時的元素編號、類別及來源欄位。',{n:fmt(issues.filter(isModelIssue).length)}));
-  if(draftModelMapping)notes.push(t(nativeModelPlan?'先查看模型差異及來源值。原生 Revit 圖紙輸出；請核對此項目的 PDF／圖像一致性、圈注可見性及圖面位置。':'模型平面草稿由捕捉的 2D 線條建立；紙面座標尚未對照正式 Sheet PDF 驗證。請以元素編號及來源值覆核，圖面位置待核對。'));
-  if(nativeModelPlan)notes.push(t('圈號已列於清單；請在原生圖紙核對。未有 PDF 定位座標不代表構件不可見。'),t('分享閱覽頁只載入已匯出的結果，不執行模型變更判定。'));
+  if(draftModelMapping)notes.push(t(nativeModelPlan?nativeVerificationNote():'模型平面草稿由捕捉的 2D 線條建立；紙面座標尚未對照正式 Sheet PDF 驗證。請以元素編號及來源值覆核，圖面位置待核對。'));
+  if(nativeModelPlan)notes.push(t(nativeMapHint()),t('分享閱覽頁只載入已匯出的結果，不執行模型變更判定。'));
   notes.push(t('比較範圍取決於匯出快照、類別、欄位及視圖；清單不保證涵蓋全部模型或工程問題。覆核狀態與模型欄位差異分開保存。'));
-  if(DATA.source_kind==='revit_model'||issues.every(isModelIssue)){$('coverageNote').textContent=notes.join(' ');$('coverageTitle').textContent=t(nativeModelPlan?'原生圈注來源及驗證狀態':'模型差異來源及定位說明');return}
+  if(DATA.source_kind==='revit_model'||issues.every(isModelIssue)){$('coverageNote').textContent=notes.join(' ');$('coverageTitle').textContent=t(nativeModelPlan?(nativeHatchStyle?'原生標註來源及驗證狀態':'原生圈注來源及驗證狀態'):'模型差異來源及定位說明');return}
   headings.push(t('模型元素差異'));
 }
 if(Number.isFinite(textTotal)){notes.push(Number.isFinite(textAccounted)?t('原生文字差異來源 {n} 筆，{accounted} 筆已列入或合併到分類清單。',{n:fmt(textTotal),accounted:fmt(textAccounted)}):t('原生文字差異來源 {n} 筆。',{n:fmt(textTotal)}));if(Number.isFinite(textAccounted))headings.push(t('文字')+' '+fmt(textAccounted)+' / '+fmt(textTotal))}
@@ -132,28 +137,29 @@ function renderSourcePresentation(){
     for(const option of $('layer').options)if(option.value!=='overlay')option.textContent=t(option.value==='old'?'舊模型平面':'新模型平面');
     $('plan').alt=t(draftModelMapping?'捕捉的模型平面，非正式 Sheet PDF':'模型平面變更');
     $('majorNote').textContent=t('模型欄位／位置變更');$('checkNote').textContent=t('工程影響及平面定位待覆核');$('minorNote').textContent=t('局部模型差異');
-    for(const[id,name,label]of [['nativeOldPdfDownload','old.pdf','下載舊版 PDF'],['nativeNewPdfDownload','new.pdf','下載目前 PDF'],['nativePdfDownload','annotated.pdf','下載圈註 PDF']]){
+    for(const[id,name,label]of [['nativeOldPdfDownload','old.pdf','下載舊版 PDF'],['nativeNewPdfDownload','new.pdf','下載目前 PDF'],['nativePdfDownload','annotated.pdf',nativeHatchStyle?'下載標註 PDF':'下載圈註 PDF']]){
       const link=$(id),url=DATA.documents?.[name];link.hidden=!(nativeModelPlan&&typeof url==='string'&&url.startsWith('blob:'));link.removeAttribute('href');link.removeAttribute('download');
       if(!link.hidden){link.href=url;const filename=String(name==='annotated.pdf'?DATA.native_pdf_file||'Annotated_Native_Sheet.pdf':(DATA.viewer_sheet_number||'Native_Sheet')+'_'+name).replace(/[\\/:*?"<>|\x00-\x1f]/g,'_');link.download=/\.pdf$/i.test(filename)?filename:'Native_Sheet.pdf';link.textContent=t(label);}
     }
     if(nativeModelPlan){
-      $('planTitle').textContent=t('模型差異 · 原生 Revit 圖紙');$('catalogNote').textContent=t('來源值先列出，再於原生 Revit 圖紙核對圈號。');
+      $('planTitle').textContent=t('模型差異 · 原生 Revit 圖紙');$('catalogNote').textContent=t(nativeHatchStyle?'先看模型來源值；於原生圖紙放大核對牆身 hatch 及小標記。':'來源值先列出，再於原生 Revit 圖紙核對圈號。');
       $('layer').setAttribute('aria-label',t('原生圖紙圖層'));
       for(const option of $('layer').options){
-        option.textContent=t(option.value==='old'?'舊版原生圖紙':option.value==='new'?'目前原生圖紙':'圈注的原生圖紙');
+        option.textContent=t(option.value==='old'?'舊版原生圖紙':option.value==='new'?'目前原生圖紙':nativeHatchStyle?'標註的原生圖紙':'圈注的原生圖紙');
         option.disabled=option.value==='old'&&DATA.native_old_pdf_available!==true||option.value==='new'&&DATA.native_new_pdf_available!==true;option.hidden=option.disabled;
       }
       $('layer').value=layer;
       $('plan').alt=t('Revit 原生圖紙圖像');if(draftModelMapping)$('plan').style.objectFit='contain';
       $('oldLegend').hidden=true;$('newLegend').hidden=true;let legend=document.getElementById('nativeLegend');
-      if(!legend){legend=make('span');legend.id='nativeLegend';legend.className='native-legend';$('oldLegend').parentElement.append(legend)}legend.textContent=t('圈號對應來源元素差異');
+      if(!legend){legend=make('span');legend.id='nativeLegend';legend.className='native-legend';$('oldLegend').parentElement.append(legend)}legend.textContent=t(nativeHatchStyle?'綠色新增／橙色修改，牆身 hatch；OLD 小標記為舊位置':'圈號對應來源元素差異');
     }
-    if(draftModelMapping)warnings.push(t(nativeModelPlan?'先查看模型差異及來源值。原生 Revit 圖紙輸出；請核對此項目的 PDF／圖像一致性、圈注可見性及圖面位置。':'模型平面草稿由捕捉的 2D 線條建立；紙面座標尚未對照正式 Sheet PDF 驗證。請以元素編號及來源值覆核，圖面位置待核對。'));
+    if(draftModelMapping)warnings.push(t(nativeModelPlan?nativeVerificationNote():'模型平面草稿由捕捉的 2D 線條建立；紙面座標尚未對照正式 Sheet PDF 驗證。請以元素編號及來源值覆核，圖面位置待核對。'));
   }
   if(DATA.alignment_needs_review&&!nativeModelPlan)warnings.push(t('對齊信心不足，請先核對對齊；所有候選仍完整列出，分類為暫定。'));
   $('warning').textContent=warnings.join(' ');$('warning').style.display=warnings.length?'block':'none';
   const backgroundNotes=nativeModelPlan&&Array.isArray(DATA.native_background_notes)?DATA.native_background_notes.filter(v=>typeof v==='string'&&v.length):[];
   $('nativeBackgroundNotes').hidden=backgroundNotes.length===0;$('nativeBackgroundSummary').textContent=t('原生圖紙背景來源狀態（原始記錄）');$('nativeBackgroundNoteText').textContent=backgroundNotes.join('\n');
+  if(nativeHatchStyle&&$('nativeBackgroundNotes').dataset.hatchInitialized!=='true'){$('nativeBackgroundNotes').open=false;$('nativeBackgroundNotes').dataset.hatchInitialized='true';}
 }
 function applyLanguage(){S.translateDocument();renderSourcePresentation();if(DATA.viewer_page_id){const sheet=[DATA.viewer_sheet_number,DATA.viewer_sheet_name].filter(Boolean).join(' · ');$('planTitle').textContent+=' · '+sheet;$('export').textContent=t('匯出目前圖紙 Word');$('sources').textContent=sheet+' / '+(DATA.source_labels?DATA.source_labels.old+' → '+DATA.source_labels.new:'');}document.title='PlanCompare · '+t(modelReview?'模型平面變更':'變更清單');for(const o of $('wallType').options){if(o.value==='all')continue;const label=wallTypes.find(v=>v[0]===o.value)?.[1]||o.value;o.textContent=t(label)+' '+issues.filter(c=>category(c)==='wall'&&hasWallType(c,o.value)).length}renderCoverage();render();if(selected)showDetail(selected)}
 if(DATA.viewer_only){for(const a of document.querySelectorAll('a[href="/"]')){a.href='#';a.onclick=e=>{e.preventDefault();window.parent.postMessage({type:'plancompare:open-file'},'*')};const label=a.querySelector('b');if(label)label.textContent='載入比較檔案';else a.textContent='▱　載入比較檔案';}const local=document.querySelector('.local');local.replaceChildren(make('b','● 只讀檢視'),make('span','只觀看已完成的比較'),make('br'),make('span','可覆核及匯出 Word'));}

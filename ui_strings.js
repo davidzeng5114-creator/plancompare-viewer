@@ -124,7 +124,15 @@
     '圈注未完成／未定位':'Annotation incomplete / unmapped','未建立圈注':'No circle annotation created','不適用':'Not applicable','舊區圈注':'Earlier area annotations','目前區圈注':'Current area annotations',
     '所選原生圖紙沒有可見線條（來源標示）':'No visible linework in the selected native sheet (source status)',
     '圈號對應來源元素差異':'Circles reference source element differences','原生 PDF 文件（來源）':'Native PDF filename (source)',
-    'Revit 原生圖紙圖像':'Native Revit sheet image','下載圈註 PDF':'Download annotated PDF','下載舊版 PDF':'Download earlier PDF','下載目前 PDF':'Download current PDF','匯出目前圖紙 Word':'Export current sheet Word','原生圖紙背景來源狀態（原始記錄）':'Native sheet background source status (raw records)'
+    'Revit 原生圖紙圖像':'Native Revit sheet image','下載圈註 PDF':'Download annotated PDF','下載舊版 PDF':'Download earlier PDF','下載目前 PDF':'Download current PDF','匯出目前圖紙 Word':'Export current sheet Word','原生圖紙背景來源狀態（原始記錄）':'Native sheet background source status (raw records)',
+    '下載標註 PDF':'Download annotated PDF','標註的原生圖紙':'Annotated native sheet','查看原生標註圖紙':'View the annotated native sheet',
+    '綠色新增／橙色修改，牆身 hatch；OLD 小標記為舊位置':'Green additions / orange modifications with wall hatching; small OLD markers show earlier positions',
+    '先看模型來源值；於原生圖紙放大核對牆身 hatch 及小標記。':'Review model source values; zoom into the native sheet to check wall hatching and small markers.',
+    '放大查看牆身 hatch 與小編號，對照清單中的元素前後資料。':'Zoom into wall hatching and small numbers; compare the earlier and current element data in the list.',
+    '先查看模型差異及來源值。原生 Revit 圖紙輸出；請核對此項目的 PDF／圖像一致性、標註可見性及圖面位置。':'Review model differences and source values first. These are native Revit sheet exports; review this project\'s PDF/image consistency, annotation visibility and drawing locations.',
+    '原生標註來源及驗證狀態':'Native annotation source and verification status','標記編號（來源）':'Marker number (source)','標註範圍（來源）':'Annotation area (source)',
+    '舊位置小標記狀態':'Earlier position marker status','目前小標記狀態':'Current marker status','目前構件色彩／填充（來源）':'Current element colour / fill applied (source)','未建立小標記':'No small marker created','標記未完成／未定位':'Marker incomplete / unmapped','標記待驗證':'Marker awaits verification',
+    '原生標註及 PDF 定位待驗證':'Native annotations and PDF locations await verification'
   };
   const reverse = new Map(Object.entries(dictionary).map(([zh,en]) => [en,zh]));
   function t(key, values = {}, lang = language) {
@@ -264,8 +272,11 @@
     const labels={old:'舊區／舊位置',current:'目前區／目前位置',new:'目前區／目前位置',both:'舊區及目前區',unmapped:'未定位'};
     return role===undefined||role===null||role===''?t('未提供',{},lang):t(labels[role]||String(role),{},lang);
   }
-  function nativeStatus(status, lang=language) {
+  function nativeStatus(status, lang=language, hatchStyle=false) {
     const labels={pending:'圈注待驗證',unverified:'圈注待驗證',requested:'已要求圈注，輸出待驗證',created:'Revit 註記已建立，PDF 輸出待驗證',circle_created:'Revit 註記已建立，PDF 輸出待驗證',placed:'Revit 註記已建立，PDF 輸出待驗證',annotated:'Revit 註記已建立，PDF 輸出待驗證',failed:'圈注未完成／未定位',unmapped:'圈注未完成／未定位',no_circle:'未建立圈注',not_applicable:'不適用',none:'不適用'};
+    if(hatchStyle&&status==='no_circle')return t('未建立小標記',{},lang);
+    if(hatchStyle&&['failed','unmapped'].includes(status))return t('標記未完成／未定位',{},lang);
+    if(hatchStyle&&['pending','unverified'].includes(status))return t('標記待驗證',{},lang);
     return status===undefined||status===null||status===''?t('未提供',{},lang):t(labels[status]||String(status),{},lang);
   }
   global.PCStrings={t,getLanguage,setLanguage,translateDocument,issueText,wallDescription,dictionary,LANGUAGE_KEY,isModelIssue,modelKindName,modelValue,modelFieldChanges,modelFieldValue,nativeAnnotation,nativeRole,nativeStatus};
