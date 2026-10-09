@@ -88,7 +88,7 @@
     '{n} 項待確認':'{n} need review','{n} 項小變動':'{n} minor changes','配對邊界及端部／交接證據。':'Paired boundaries and end/junction evidence.',
     '紙面改動長度 {n} pt':'Changed length on paper: {n} pt','紙面偏移 {n} pt':'Offset on paper: {n} pt',
     '附近標註：{text}':'Nearby annotation: {text}','此項合併 {n} 筆同區證據，原始編號：{ids}':'{n} local source records grouped here; source IDs: {ids}',
-    '模型平面變更':'Model plan changes','牆體變更':'Walls','門變更':'Doors','窗變更':'Windows',
+    '模型平面變更':'Model plan changes','牆體變更':'Walls','門變更':'Doors','窗變更':'Windows','樓板變更':'Floors','結構柱變更':'Structural columns','梁變更':'Beams',
     '模型元素差異':'Model element differences','模型新增':'Model addition','模型移除':'Model removal','模型修改':'Model modification',
     '模型位置改變':'Model position change','模型型號改變':'Model type change','模型參數改變':'Model parameter change','模型幾何改變':'Model geometry change',
     '舊模型位置':'Earlier model position','新模型位置':'Later model position','模型平面草稿':'Draft model plan',
@@ -112,7 +112,7 @@
     '此區 {n} 項模型差異，點選放大':'{n} model differences in this area; select to zoom','同區 {n} 項模型差異':'{n} model differences in the same area',
     '模型差異 · 原生 Revit 圖紙':'Model differences · native Revit sheets','圈注的原生圖紙':'Annotated native sheet',
     '舊版原生圖紙':'Earlier native sheet','目前原生圖紙':'Current native sheet','原生圖紙圖層':'Native sheet layer','查看原生圈注圖紙':'View the annotated native sheet',
-    '先查看模型差異及來源值。原生 Revit 圖紙輸出；PDF 及圖像的一致性、圈注輸出及定位仍待實機核對。':'Review model differences and source values first. These are native Revit sheet exports; PDF/image consistency, annotation output and locations require runtime verification.',
+    '先查看模型差異及來源值。原生 Revit 圖紙輸出；請核對此項目的 PDF／圖像一致性、圈注可見性及圖面位置。':'Review model differences and source values first. These are native Revit sheet exports; review this project\'s PDF/image consistency, annotation visibility and drawing locations.',
     '圈號已列於清單；請在原生圖紙核對。未有 PDF 定位座標不代表構件不可見。':'Circle numbers are listed for checking on the native sheet. Missing PDF coordinates do not mean the element is invisible.',
     '分享閱覽頁只載入已匯出的結果，不執行模型變更判定。':'The shared viewer displays exported results and does not detect model changes.',
     '來源值先列出，再於原生 Revit 圖紙核對圈號。':'Source values are listed first; check the circle numbers on the native Revit sheet.',
@@ -124,7 +124,7 @@
     '圈注未完成／未定位':'Annotation incomplete / unmapped','未建立圈注':'No circle annotation created','不適用':'Not applicable','舊區圈注':'Earlier area annotations','目前區圈注':'Current area annotations',
     '所選原生圖紙沒有可見線條（來源標示）':'No visible linework in the selected native sheet (source status)',
     '圈號對應來源元素差異':'Circles reference source element differences','原生 PDF 文件（來源）':'Native PDF filename (source)',
-    'Revit 原生圖紙圖像':'Native Revit sheet image','下載圈註 PDF':'Download annotated PDF'
+    'Revit 原生圖紙圖像':'Native Revit sheet image','下載圈註 PDF':'Download annotated PDF','下載舊版 PDF':'Download earlier PDF','下載目前 PDF':'Download current PDF','匯出目前圖紙 Word':'Export current sheet Word'
   };
   const reverse = new Map(Object.entries(dictionary).map(([zh,en]) => [en,zh]));
   function t(key, values = {}, lang = language) {
